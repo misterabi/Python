@@ -3,6 +3,7 @@ Jeu Smash Bros
 Objectif : Survivre
 
 Nombre de joueurs maximum : 2
+
 Nombre de vie par joueur  : 3
 
 
