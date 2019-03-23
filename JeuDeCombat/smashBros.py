@@ -78,7 +78,7 @@ while launched:
     fenetre_smash_bros.blit(joueur1, position_joueur1)
     pygame.display.flip()
 
-
+# Ce code est à continuer...
 
 
 
