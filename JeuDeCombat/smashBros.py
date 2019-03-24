@@ -52,6 +52,10 @@ position_joueur2.center= 350,398
 fenetre_smash_bros.blit(joueur2, position_joueur2)
 joueur2.set_colorkey(white)
 
+isJump1= False
+jumpCount1 = 10
+isJump2=False
+jumpCount2=10
 pygame.display.flip()
 
 launched = True
@@ -66,20 +70,40 @@ while launched:
         position_joueur2 = position_joueur2.move(-5, 0)
     if key[pygame.K_d] and position_joueur2.x < 685:
         position_joueur2 = position_joueur2.move(5, 0)
-    if key[pygame.K_w] and position_joueur2.y > 0:
-        position_joueur2 = position_joueur2.move(0, -5)
-    if key[pygame.K_s] and position_joueur2.y <348:
-        position_joueur2 = position_joueur2.move(0, 5)
-
+    if not (isJump1):
+        if key[pygame.K_s] and position_joueur2.y <348:
+            position_joueur2 = position_joueur2.move(0, 5)
+        if key[pygame.K_SPACE]:
+            isJump1=True
+    else:
+        if jumpCount1>= -10:
+            neg=1
+            if jumpCount1<0:
+                neg= -1
+            position_joueur2 = position_joueur2.move(0,-(jumpCount1**2)*0.5*neg)
+            jumpCount1-=1
+        else:
+            isJump1=False
+            jumpCount1=10
     if key[pygame.K_LEFT] and position_joueur1.x > 1 :
         position_joueur1 = position_joueur1.move(-5, 0)
     if key[pygame.K_RIGHT] and position_joueur1.x < 685:
         position_joueur1 = position_joueur1.move(5, 0)
-    if key[pygame.K_UP] and position_joueur1.y > 0:
-        position_joueur1 = position_joueur1.move(0, -5)
-    if key[pygame.K_DOWN] and position_joueur1.y <348:
-        position_joueur1 = position_joueur1.move(0, 5)
-
+    if not (isJump2):
+        if key[pygame.K_DOWN] and position_joueur1.y <348:
+            position_joueur1 = position_joueur1.move(0, 5)
+        if key[pygame.K_RCTRL]:
+            isJump2=True
+    else:
+        if jumpCount2>= -10:
+            neg=1
+            if jumpCount2<0:
+                neg= -1
+            position_joueur1 = position_joueur1.move(0,-(jumpCount2**2)*0.5*neg)
+            jumpCount2-=1
+        else:
+            isJump2=False
+            jumpCount2=10
     fenetre_smash_bros.fill(bleu)
     pygame.draw.rect(fenetre_smash_bros, black, rectangle)
     fenetre_smash_bros.blit(joueur1, position_joueur1)
