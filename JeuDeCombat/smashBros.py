@@ -1,4 +1,5 @@
 import pygame
+from pygame.rect import Rect
 
 """
 Jeu Smash Bros
@@ -24,88 +25,139 @@ Phase de développement:
 3/ Attaquer un joueur
 4/ Calculer victoire
 """
+# couleur
 
 bleu = (14, 180, 245)
 black = (0, 0, 0)
-white=(255,255,255)
+white = (255, 255, 255)
+red = 255, 0, 0
+
 pygame.init()
+
+# titre
 pygame.display.set_caption('SMASH BROS')
 pygame.key.set_repeat(30, 30)
-
+# taille de la fenetre
 fenetre_smash_bros = pygame.display.set_mode((720, 480))
 
+# creation du sol
 rectangle = pygame.Rect(0, 450, 720, 480)
-
 fenetre_smash_bros.fill(bleu)
-
 pygame.draw.rect(fenetre_smash_bros, black, rectangle)
 
-joueur1 = pygame.image.load("image/heros1_marche1D.png").convert()
-position_joueur1 = joueur1.get_rect()
-position_joueur1.center= 100,398
-fenetre_smash_bros.blit(joueur1,position_joueur1)
-joueur1.set_colorkey(white)
 
-joueur2 = pygame.image.load("image/heros1_marche1G.png").convert()
-position_joueur2 = joueur2.get_rect()
-position_joueur2.center= 350,398
-fenetre_smash_bros.blit(joueur2, position_joueur2)
-joueur2.set_colorkey(white)
+class platform(Rect, object):
+    def __init__(self, image, rect):
+        Rect.__init__(self, rect)
+        self.image = pygame.image.load(image).convert()
 
-isJump1= False
+    def draw(self):
+        fenetre_smash_bros.blit(self.image, self)
+
+
+class player:
+
+    def __init__(self, source, position):
+        self.source = pygame.image.load(source).convert()
+        self.rect = self.source.get_rect()
+        self.rect.center = position
+        fenetre_smash_bros.blit(self.source, self.rect)
+        self.source.set_colorkey(white)
+
+    def damage(self, punch, distance, SuperPower):
+        self.punch = punch
+        self.distance = distance
+        self.SuperPower = SuperPower
+    def health(self,healthmax,life):
+        self.heathmax=healthmax
+        self.Number_life=life
+
+def draw():
+    sol.draw()
+
+class fire_ball:
+    # creation d'un sprite boule de feu directionnel
+    def __init__(self, droite, haut, bas, gauche):
+        pygame.sprite.Sprite.__init__(self)
+
+# creation de platform
+
+sol = platform("image/sol.bmp", (0, 450, 720, 480))
+
+# creation des joueur
+
+abi = player("image/heros1_marche1D.png", (100, 398))
+JC = player("image/heros1_marche1G.png", (350, 398))
+
+
+isJump1 = False
 jumpCount1 = 10
-isJump2=False
-jumpCount2=10
+isJump2 = False
+jumpCount2 = 10
 pygame.display.flip()
 
 launched = True
 while launched:
-    #limitation de la boucle
+    # limitation de la boucle
     pygame.time.Clock().tick(50)
+    # touche de clavier
+
+    key = pygame.key.get_pressed()
+    Left1 = key[pygame.K_a]
+    Right1 = key[pygame.K_d]
+    Up1 = key[pygame.K_w]
+    Down1 = key[pygame.K_s]
+    Jump1 = key[pygame.K_SPACE]
+    Left2 = key[pygame.K_LEFT]
+    Right2 = key[pygame.K_RIGHT]
+    Up2 = key[pygame.K_UP]
+    Down2 = key[pygame.K_DOWN]
+    Jump2 = key[pygame.K_RCTRL]
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             launched = False
-    key = pygame.key.get_pressed()
-    if key[pygame.K_a] and position_joueur2.x > 1 :
-        position_joueur2 = position_joueur2.move(-5, 0)
-    if key[pygame.K_d] and position_joueur2.x < 685:
-        position_joueur2 = position_joueur2.move(5, 0)
+    if Left1 and abi.rect.x > 1:
+        abi.rect = abi.rect.move(-5, 0)
+    if Right1 and abi.rect.x < 685:
+        abi.rect = abi.rect.move(5, 0)
     if not (isJump1):
-        if key[pygame.K_s] and position_joueur2.y <348:
-            position_joueur2 = position_joueur2.move(0, 5)
-        if key[pygame.K_SPACE]:
-            isJump1=True
+        if Down1 and abi.rect.y < 348:
+            abi.rect = abi.rect.move(0, 5)
+        if Jump1:
+            isJump1 = True
     else:
-        if jumpCount1>= -10:
-            neg=1
-            if jumpCount1<0:
-                neg= -1
-            position_joueur2 = position_joueur2.move(0,-(jumpCount1**2)*0.5*neg)
-            jumpCount1-=1
+        if jumpCount1 >= -10:
+            neg = 1
+            if jumpCount1 < 0:
+                neg = -1
+            abi.rect = abi.rect.move(0, -(jumpCount1 ** 2) * 0.5 * neg)
+            jumpCount1 -= 1
         else:
-            isJump1=False
-            jumpCount1=10
-    if key[pygame.K_LEFT] and position_joueur1.x > 1 :
-        position_joueur1 = position_joueur1.move(-5, 0)
-    if key[pygame.K_RIGHT] and position_joueur1.x < 685:
-        position_joueur1 = position_joueur1.move(5, 0)
+            isJump1 = False
+            jumpCount1 = 10
+    if Left2 and JC.rect.x > 1:
+        JC.rect = JC.rect.move(-5, 0)
+    if Right2 and JC.rect.x < 685:
+        JC.rect = JC.rect.move(5, 0)
     if not (isJump2):
-        if key[pygame.K_DOWN] and position_joueur1.y <348:
-            position_joueur1 = position_joueur1.move(0, 5)
-        if key[pygame.K_RCTRL]:
-            isJump2=True
+        if Down2 and JC.rect.y < 348:
+            JC.rect = JC.rect.move(0, 5)
+        if Jump2:
+            isJump2 = True
     else:
-        if jumpCount2>= -10:
-            neg=1
-            if jumpCount2<0:
-                neg= -1
-            position_joueur1 = position_joueur1.move(0,-(jumpCount2**2)*0.5*neg)
-            jumpCount2-=1
+        if jumpCount2 >= -10:
+            neg = 1
+            if jumpCount2 < 0:
+                neg = -1
+            JC.rect = JC.rect.move(0, -(jumpCount2 ** 2) * 0.5 * neg)
+            jumpCount2 -= 1
         else:
-            isJump2=False
-            jumpCount2=10
+            isJump2 = False
+            jumpCount2 = 10
     fenetre_smash_bros.fill(bleu)
     pygame.draw.rect(fenetre_smash_bros, black, rectangle)
-    fenetre_smash_bros.blit(joueur1, position_joueur1)
-    fenetre_smash_bros.blit(joueur2, position_joueur2)
+    fenetre_smash_bros.blit(JC.source, JC.rect)
+    fenetre_smash_bros.blit(abi.source, abi.rect)
+    draw()
     pygame.display.flip()
