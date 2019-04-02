@@ -13,8 +13,8 @@ Règles de jeu :
 	Touche V : attaquer 
  Joueur 2 : 
 	Touches Z,Q,S,D : déplacer
-	Touche 0 : sauter
-	Touche 1 : attaquer 
+	Touche crtl : sauter
+	Touche maj : attaquer 
  Si un joueur A attaque un joueur B alors le joueur B perd une vie.
 
  Définition de attaquer : premier qui touche l'autre
