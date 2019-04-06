@@ -55,7 +55,7 @@ class platform(Rect, object):
 
 class player(pygame.sprite.Sprite):
     spriteSheet = pygame.image.load("image/heros.png").convert_alpha()
-    sequences = [(0,False),(0,1,False), (1,6,True),(7,10,False)]
+    sequences = [(0,False),(0,1,False), (1,6,True),(7,2,False)]
 
     def __init__(self,position):
         pygame.sprite.Sprite.__init__(self)
