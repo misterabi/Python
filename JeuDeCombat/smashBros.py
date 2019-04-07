@@ -23,6 +23,8 @@ Phase de développement:
 3/ Attaquer un joueur
 4/ Calculer victoire
 """
+pygame.init()
+
 # couleur
 time=16
 bleu = (14, 180, 245)
@@ -30,7 +32,23 @@ black = (0, 0, 0)
 white = (255, 255, 255)
 red = 255, 0, 0
 
-pygame.init()
+keys = pygame.key.get_pressed()
+Left1 =keys[pygame.K_a]
+Right1 = keys[pygame.K_d]
+Up1 = keys[pygame.K_w]
+Down1 =keys[pygame.K_s]
+Jump1 = keys[pygame.K_SPACE]
+Left2 = keys[pygame.K_LEFT]
+Right2 = keys[pygame.K_RIGHT]
+Up2 = keys[pygame.K_UP]
+Down2 =keys[pygame.K_DOWN]
+Jump2 =keys[pygame.K_RCTRL]
+
+isJump1 = False
+jumpCount1 = 10
+isJump2 = False
+jumpCount2 = 10
+
 
 # titre
 pygame.display.set_caption('SMASH BROS')
@@ -110,6 +128,30 @@ class player(pygame.sprite.Sprite):
 def draw():
     sol.draw()
 
+def deplacement(gauche, droite, se_baisser, saut, check_saut, hauteur_saut, joueur):
+    if gauche and joueur.rect.x > 1:
+        joueur.gotLeft()
+    if droite and joueur.rect.y <685:
+        joueur.goRight()
+    if not check_saut :
+        if se_baisser and joueur.rect.y > 348:
+            Joueur.crouch()
+        if saut:
+            check_saut = True
+    if check_saut:
+        if hauteur_saut >= -10:
+            neg=1
+            if hauteur_saut < 0:
+                neg=-1
+            pygame.time.Clock().tick(50)
+            joueur.rect = joueur.rect.move(0,-(hauteur_saut ** 2)* 0.5 * neg)
+            hauteur_saut -= 1
+        else:
+            check_saut=False
+            hauteur_saut = 10
+    else:
+        joueur.stand()
+
 class fire_ball:
     # creation d'un sprite boule de feu directionnel
     def __init__(self,):
@@ -125,10 +167,7 @@ abi = player((100, 417))
 JC = player((350, 417))
 
 
-isJump1 = False
-jumpCount1 = 10
-isJump2 = False
-jumpCount2 = 10
+
 pygame.display.flip()
 
 launched = True
@@ -136,69 +175,12 @@ while launched:
 
     pygame.time.Clock().tick(100)
     # touche de clavier
-
-    key = pygame.key.get_pressed()
-    Left1 = key[pygame.K_a]
-    Right1 = key[pygame.K_d]
-    Up1 = key[pygame.K_w]
-    Down1 = key[pygame.K_s]
-    Jump1 = key[pygame.K_SPACE]
-    Left2 = key[pygame.K_LEFT]
-    Right2 = key[pygame.K_RIGHT]
-    Up2 = key[pygame.K_UP]
-    Down2 = key[pygame.K_DOWN]
-    Jump2 = key[pygame.K_RCTRL]
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             launched = False
-    #pb nous pouvons sauter seulement si nous appuyons sur vancer et sauter
-    if event.type == pygame.KEYDOWN and event.key is key[pygame.K_j] or Jump1 or Right1 or Left1:
-        if Left1 and abi.rect.x > 1:
-            abi.goLeft()
-        if Right1 and abi.rect.x < 685:
-            abi.goRight()
-        if not isJump1:
-            if Down1 and abi.rect.y > 348:
-                abi.crouch()
-            if Jump1:
-                isJump1 = True
-        else:
-            if jumpCount1 >= -10:
-                neg = 1
-                if jumpCount1 < 0:
-                    neg = -1
-                pygame.time.Clock().tick(50)
-                abi.rect = abi.rect.move(0, -(jumpCount1 ** 2) * 0.5 * neg)
-                jumpCount1 -= 1
-            else:
-                isJump1 = False
-                jumpCount1 = 10
-    else:
-        abi.stand()
-    if event.type == pygame.KEYDOWN and event.key is key[pygame.K_j] or Jump2 or Right2 or Left2:
-        if Left2 and JC.rect.x > 1:
-            JC.goLeft()
-        if Right2 and JC.rect.x < 685:
-            JC.goRight()
-        if not isJump2:
-            if Down2 and JC.rect.y < 348:
-                JC.crouch()
-            if Jump2:
-                isJump2 = True
-        else:
-            if jumpCount2 >= -10:
-                neg = 1
-                if jumpCount2 < 0:
-                    neg = -1
-                pygame.time.Clock().tick(50)
-                JC.rect = JC.rect.move(0, -(jumpCount2 ** 2) * 0.5 * neg)
-                jumpCount2 -= 1
-            else:
-                isJump2 = False
-                jumpCount2 = 10
-    else:
-        JC.stand()
+
+    deplacement(Left1,Right1,Down1,Jump1,isJump1,jumpCount1,abi)
+    deplacement(Left2,Right2,Down2,Jump2,isJump2,jumpCount2,JC)
 
     player.update(abi,time)
     player.update(JC, time)
