@@ -1,6 +1,5 @@
 import pygame
-from pygame.rect import Rect
-
+import threading
 """
 Jeu Smash Bros
 Objectif : Survivre
@@ -23,32 +22,17 @@ Phase de développement:
 3/ Attaquer un joueur
 4/ Calculer victoire
 """
-pygame.init()
-
 # couleur
-time=16
 bleu = (14, 180, 245)
 black = (0, 0, 0)
 white = (255, 255, 255)
 red = 255, 0, 0
 
-keys = pygame.key.get_pressed()
-Left1 =keys[pygame.K_a]
-Right1 = keys[pygame.K_d]
-Up1 = keys[pygame.K_w]
-Down1 =keys[pygame.K_s]
-Jump1 = keys[pygame.K_SPACE]
-Left2 = keys[pygame.K_LEFT]
-Right2 = keys[pygame.K_RIGHT]
-Up2 = keys[pygame.K_UP]
-Down2 =keys[pygame.K_DOWN]
-Jump2 =keys[pygame.K_RCTRL]
 
-isJump1 = False
-jumpCount1 = 10
-isJump2 = False
-jumpCount2 = 10
+directionVitesse=5
+CooldDown=1
 
+pygame.init()
 
 # titre
 pygame.display.set_caption('SMASH BROS')
@@ -61,42 +45,40 @@ rectangle = pygame.Rect(0, 450, 720, 480)
 fenetre_smash_bros.fill(bleu)
 pygame.draw.rect(fenetre_smash_bros, black, rectangle)
 
-
-class platform(Rect, object):
-    def __init__(self, image, rect):
-        Rect.__init__(self, rect)
-        self.image = pygame.image.load(image).convert()
-
-    def draw(self):
-        fenetre_smash_bros.blit(self.image, self)
-
-
 class player(pygame.sprite.Sprite):
-    spriteSheet = pygame.image.load("image/heros.png").convert_alpha()
-    sequences = [(0,False),(0,1,False), (1,6,True),(7,2,False)]
 
-    def __init__(self,position):
+    sequences = [(0, False), (0, 1, False), (1, 6, True), (14, 3, False), (19, 1, False), (25, 1, False)]
+
+    def __init__(self,position,image):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image = player.spriteSheet.subsurface(pygame.Rect(0, 0, 32, 64))
+        self.spriteSheet = pygame.image.load(image).convert_alpha()
+
+        self.image = self.spriteSheet.subsurface(pygame.Rect(0, 0, 64, 90))
         self.rect = pygame.Rect(0, 0, 32, 64)
         self.rect.center = position
+        self.isJump=False
+        self.jumpCount=10
+        self.sens_personnage_droite=True
+        self.sens_personnage_gauche=False
 
+        self.cooldown=1
         self.numeroSequence = 0
         self.numeroImage = 0
         self.flip = False
 
         self.deltaTime = 0
-        self.vitesse = 1
+        self.vitesse = 2
 
-    def update(self, time):
-        self.deltaTime = self.deltaTime + time
+    def update(self):
+
+        self.deltaTime = self.deltaTime + 16
 
         if self.deltaTime >= 50:
             self.deltaTime = 0
 
             n = player.sequences[self.numeroSequence][0] + self.numeroImage
-            self.image = player.spriteSheet.subsurface(pygame.Rect(n % 10 * 32, n // 10 * 64, 32, 64))
+            self.image = self.spriteSheet.subsurface(pygame.Rect(n % 10 * 64, n // 10 * 100, 64, 90))
             if self.flip:
                 self.image = pygame.transform.flip(self.image, True, False)
 
@@ -108,6 +90,7 @@ class player(pygame.sprite.Sprite):
                 else:
                     self.numeroImage = self.numeroImage - 1
 
+
     def setSequence(self, n):
         if self.numeroSequence != n:
             self.numeroImage = 0
@@ -116,6 +99,8 @@ class player(pygame.sprite.Sprite):
         self.setSequence(1)
     def crouch(self):
         self.setSequence(3)
+    def jump(self):
+        self.setSequence(4)
     def goRight(self):
         self.rect = self.rect.move(self.vitesse, 0)
         self.flip = False
@@ -125,47 +110,98 @@ class player(pygame.sprite.Sprite):
         self.rect = self.rect.move(-self.vitesse, 0)
         self.flip = True
         self.setSequence(2)
-def draw():
-    sol.draw()
+    def punch(self):
+        self.setSequence(5)
 
-def deplacement(gauche, droite, se_baisser, saut, check_saut, hauteur_saut, joueur):
-    if gauche and joueur.rect.x > 1:
-        joueur.gotLeft()
-    if droite and joueur.rect.y <685:
-        joueur.goRight()
-    if not check_saut :
-        if se_baisser and joueur.rect.y > 348:
-            Joueur.crouch()
-        if saut:
-            check_saut = True
-    if check_saut:
-        if hauteur_saut >= -10:
-            neg=1
-            if hauteur_saut < 0:
-                neg=-1
+    def rect(self):
+        self.image = player.spriteSheet.subsurface(pygame.Rect(320, 180, 64, 90))
+
+    def shoot(self,speed):
+        if self.sens_personnage_droite is True:
+            ball = Ball((self.rect.centerx+30,self.rect.centery),speed)
+        if self.sens_personnage_gauche is True:
+            ball = Ball((self.rect.centerx-30,self.rect.centery),speed)
+
+        bullets.add(ball)
+
+class Ball(pygame.sprite.Sprite):
+    def __init__(self,position,speed):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("image/fireball1.png").convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.center = position
+        self.speed= speed
+    def update(self):
+        self.rect.x += self.speed
+        if self.rect.y > 720:
+            self.kill()
+def mouvement(joueur,ennemie,leurre,gauche,droite,accroupir,saut,tire,coup):
+    global directionVitesse
+    if event.type == pygame.KEYDOWN and event.key is leurre or droite or gauche or accroupir or saut or  tire or coup :
+        if gauche and joueur.rect.x > 1:
+            joueur.goLeft()
+        if droite and ennemie.rect.x < 685 and not joueur.rect.colliderect(ennemie.rect):
+            joueur.goRight()
+
+        if event.type == pygame.KEYUP:
+            if droite:
+                joueur.sens_personnage_gauche=False
+                joueur.sens_personnage_droite=True
+                directionVitesse=5
+            if gauche:
+                joueur.sens_personnage_droite=False
+                joueur.sens_personnage_gauche=True
+                directionVitesse=-5
+        if joueur.cooldown >=1 and tire :
             pygame.time.Clock().tick(50)
-            joueur.rect = joueur.rect.move(0,-(hauteur_saut ** 2)* 0.5 * neg)
-            hauteur_saut -= 1
-        else:
-            check_saut=False
-            hauteur_saut = 10
+            joueur.punch()
+            abi.cooldown -= 1
+            if joueur.rect.colliderect(ennemie.rect):
+                print("toucher")
+
+        if joueur.cooldown >=1.5 and coup:
+            joueur.shoot(directionVitesse)
+            joueur.cooldown -= 2
+        if not joueur.isJump:
+            if accroupir:
+                joueur.crouch()
+
+            if saut:
+                joueur.isJump = True
+                print("saut")
+
+        if joueur.isJump is True:
+            if joueur.jumpCount >= -10:
+                neg = 1
+                if joueur.jumpCount < 0:
+                    neg = -1
+                pygame.time.Clock().tick(50)
+                joueur.rect = joueur.rect.move(0, -(joueur.jumpCount ** 2) * 0.3 * neg)
+
+                joueur.jumpCount -= 1
+            else:
+                joueur.isJump = False
+                joueur.jumpCount = 10
+
     else:
         joueur.stand()
-
-class fire_ball:
-    # creation d'un sprite boule de feu directionnel
-    def __init__(self,):
-        pygame.sprite.Sprite.__init__(self)
-
-# creation de platform
-
-sol = platform("image/sol.bmp", (0, 450, 720, 480))
+    if joueur.cooldown <1.6:
+        joueur.cooldown+=0.1
 
 # creation des joueur
+all_sprite=pygame.sprite.Group()
+damage=pygame.sprite.Group()
+bullets=pygame.sprite.Group()
+enemie=pygame.sprite.Group()
+allie=pygame.sprite.Group()
 
-abi = player((100, 417))
-JC = player((350, 417))
+abi = player((100, 408),"image/heros1.png")
+JC = player((350, 408),"image/skeletonBase.png")
 
+enemie.add(JC)
+allie.add(abi)
+all_sprite.add(abi)
+all_sprite.add(JC)
 
 
 pygame.display.flip()
@@ -173,20 +209,53 @@ pygame.display.flip()
 launched = True
 while launched:
 
-    pygame.time.Clock().tick(100)
+    pygame.time.Clock().tick(50)
     # touche de clavier
+
+    key = pygame.key.get_pressed()
+    Left1 = key[pygame.K_a]
+    Right1 = key[pygame.K_d]
+    Down1 = key[pygame.K_s]
+    Jump1 = key[pygame.K_z]
+    fire1 = key[pygame.K_g]
+    punching1 = key[pygame.K_f]
+    bloc1=key[pygame.K_SPACE]
+
+    Left2 = key[pygame.K_LEFT]
+    Right2 = key[pygame.K_RIGHT]
+    Down2 = key[pygame.K_DOWN]
+    Jump2 = key[pygame.K_UP]
+    fire2= key[pygame.K_RCTRL]
+    punching2=key[pygame.K_RALT]
+    bloc2=key[pygame.K_RSHIFT]
+
+    test=key[pygame.K_j]
+    hits1 = pygame.sprite.groupcollide(bullets, enemie, True, False)
+    hits2 = pygame.sprite.groupcollide(bullets, allie, True, False)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             launched = False
+    mouvement(abi,JC,test,Left1,Right1,Down1,Jump1,fire1,punching1)
+    mouvement(JC,abi,test,Left2,Right2,Down2,Jump2,fire2,punching2)
 
-    deplacement(Left1,Right1,Down1,Jump1,isJump1,jumpCount1,abi)
-    deplacement(Left2,Right2,Down2,Jump2,isJump2,jumpCount2,JC)
+    if bloc2 and hits1:
+        print("no damage,player2")
+    elif not bloc1 and hits1:
+        print("aie,player2")
+    if bloc1 and hits2:
+        print("no damage,player1")
+    elif  not bloc2 and hits2:
+        print("aie,player1")
 
-    player.update(abi,time)
-    player.update(JC, time)
+
+
+
+
+    bullets.update()
+    all_sprite.update()
     fenetre_smash_bros.fill(bleu)
     pygame.draw.rect(fenetre_smash_bros, black, rectangle)
-    fenetre_smash_bros.blit(JC.image, JC.rect)
-    fenetre_smash_bros.blit(abi.image, abi.rect)
-    draw()
+    all_sprite.draw(fenetre_smash_bros)
+    bullets.draw(fenetre_smash_bros)
+
     pygame.display.flip()
