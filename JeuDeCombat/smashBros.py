@@ -27,24 +27,30 @@ Phase de développement:
 bleu = (14, 180, 245)
 black = (0, 0, 0)
 white = (255, 255, 255)
-red = (255, 0, 0)
+Red = (255, 0, 0)
+Green=(0,255,0)
+Yellow=(255,255,0)
+Orange=	(255,165,0)
+
 
 directionVitesse = 5
 pygame.init()
 
+#chargement des sons
+
+pygame.mixer.music.load('sons/music_background.ogg')
+#lance la music
+
+pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.01)
 # titre
 pygame.display.set_caption('SMASH BROS')
 pygame.key.set_repeat(30, 30)
 # taille de la fenetre
-fenetre_smash_bros = pygame.display.set_mode((720, 480))
-
-# creation du sol
-rectangle = pygame.Rect(0, 450, 720, 480)
-pygame.draw.rect(fenetre_smash_bros, black, rectangle)
-
+fenetre_smash_bros = pygame.display.set_mode((720, 250))
 
 class player(pygame.sprite.Sprite):
-    sequences = [(0, False), (0, 1, False), (1, 6, True), (14, 3, False), (19, 1, False), (25, 1, False)]
+    sequences = [(0, False), (0, 1, False), (1, 6, True), (25, 1, False)]
 
     def __init__(self, position, image, coordonne):
         pygame.sprite.Sprite.__init__(self)
@@ -62,7 +68,7 @@ class player(pygame.sprite.Sprite):
 
         self.isJump = False
         self.jumpCount = 10
-        self.cooldownSuperPower = 15
+        self.cooldownSuperPower = 10
         self.cooldownFire = 1
         self.numeroSequence = 0
         self.numeroImage = 0
@@ -97,12 +103,8 @@ class player(pygame.sprite.Sprite):
         if self.numeroSequence != n:
             self.numeroImage = 0
             self.numeroSequence = n
-
     def stand(self):
         self.setSequence(1)
-
-    def jump(self):
-        self.setSequence(4)
 
     def goRight(self):
         self.rect = self.rect.move(self.vitesse, 0)
@@ -115,10 +117,7 @@ class player(pygame.sprite.Sprite):
         self.setSequence(2)
 
     def punch(self):
-        self.setSequence(5)
-
-    def rect(self):
-        self.image = player.spriteSheet.subsurface(pygame.Rect(320, 180, 64, 90))
+        self.setSequence(3)
 
     def shoot(self, speed):
         if self.sens_personnage_droite is True:
@@ -138,11 +137,6 @@ class player(pygame.sprite.Sprite):
     def Health_player_image(self, flip, coordonne_image):
         health_player_bar_image = healthBarImage(flip, coordonne_image)
         sprite_healthBar_image.add(health_player_bar_image)
-
-    def Health_bar_player(self, coordonne, reducteur):
-        sprite_healthbar_rect = HealthBar(coordonne, reducteur, self.health)
-        sprite_healthBar.add(sprite_healthbar_rect)
-
 
 class Ball(pygame.sprite.Sprite):
     def __init__(self, position, speed, image, flip):
@@ -178,27 +172,57 @@ class healthBarImage(pygame.sprite.Sprite):
         self.rect.center = coordonne_image
         if flip:
             self.image = pygame.transform.flip(self.image, True, False)
+def background():
+    image=pygame.image.load("image/bgjeux.png")
+    fenetre_smash_bros.blit(image,(0,0))
+
+def PowerBar(Allie_cooldownSuperPower,ennemie_cooldownSuperPower):
+    if Allie_cooldownSuperPower <=10:
+        pygame.draw.rect(fenetre_smash_bros, Yellow, (68, 36,41, 3))
+    elif Allie_cooldownSuperPower <=5:
+        pygame.draw.rect(fenetre_smash_bros, Yellow, (68, 36,82, 3))
+    if Allie_cooldownSuperPower<=0:
+        pygame.draw.rect(fenetre_smash_bros, Yellow, (68, 36,123, 3))
+
+    if ennemie_cooldownSuperPower <=10:
+        pygame.draw.rect(fenetre_smash_bros, Yellow, (525, 36,41, 3))
+    elif ennemie_cooldownSuperPower <=5:
+        pygame.draw.rect(fenetre_smash_bros, Yellow, (525, 36,82, 3))
+    if ennemie_cooldownSuperPower<=0:
+        pygame.draw.rect(fenetre_smash_bros, Yellow, (525, 36,123, 3))
 
 
-class HealthBar(pygame.sprite.Sprite):
-    def __init__(self, coordonne, reducteur, health):
-        self.image = pygame.image.load("image/healthBar1Step.png").convert_alpha()
-        self.rect = self.image.get_rect()
-        self.rect.center = coordonne
-        self.x2 = self.rect.right
-        self.reducteur = reducteur
-        self.health = health
-
-    def update(self):
-        self.rect.right = 150 * self.health / 150 * self.reducteur
 
 
-def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, hitFire, hitSuperPower, ):
+def healthBarPlayer( Allie_health,ennemie_health):
+    if Allie_health > 75:
+        playerBarColor_Allie=Green
+    elif Allie_health >50:
+        playerBarColor_Allie = Yellow
+    elif Allie_health >25:
+        playerBarColor_Allie = Orange
+    else:
+        playerBarColor_Allie = Red
+
+    if ennemie_health > 75:
+        playerBarColor_ennemie=Green
+    elif ennemie_health >50:
+        playerBarColor_ennemie = Yellow
+    elif ennemie_health >25:
+        playerBarColor_ennemie = Orange
+    else:
+        playerBarColor_ennemie = Red
+    pygame.draw.rect(fenetre_smash_bros,playerBarColor_Allie,(40,23,((Allie_health*150)/100*1),9))
+    pygame.draw.rect(fenetre_smash_bros,playerBarColor_ennemie,(675,23,((ennemie_health*150)/100*-1),9))
+
+
+
+def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, hitFire, hitSuperPower ):
     global directionVitesse
     if event.type == pygame.KEYDOWN and event.key is leurre or droite or gauche or saut or tire or coup:
-        if gauche and joueur.rect.x > 1:
+        if gauche and joueur.rect.x > 1 and not bloc:
             joueur.goLeft()
-        if droite and joueur.rect.x < 685:
+        if droite and joueur.rect.x < 685 and not bloc :
             joueur.goRight()
 
         if event.type == pygame.KEYUP:
@@ -244,7 +268,7 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
         # Super Attaque#
         if tire and coup and joueur.cooldownSuperPower <= 0:
             joueur.SuperPower(directionVitesse)
-            joueur.cooldownSuperPower = 15
+            joueur.cooldownSuperPower = 10
         if tire and coup and joueur.cooldownSuperPower >= 0:
             print("il vous reste:", joueur.cooldownSuperPower)
 
@@ -256,6 +280,7 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
     # collision attaque distance#
     if bloc and hitFire:
         joueur.health -= 0
+
     elif not bloc and hitFire:
         joueur.health -= 2
         ennemie.cooldownSuperPower -= 0.5
@@ -269,15 +294,18 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
         joueur.kill()
 
 
-def EndGame(playeurHealth1, playeurHealth2):
-    global launched
-    if not playeurHealth1:
-        pygame.display.quit
-    if not playeurHealth2:
-        pygame.display.quit
+def EndGame(playeur1Alive, playeur2Alive):
+    if not playeur1Alive:
+        image = pygame.image.load("image/image_vainqueur_squelette.png")
+        fenetre_smash_bros.blit(image, (0, 0))
+        pygame.mixer.music.stop
+    if not playeur2Alive:
+        image = pygame.image.load("image/image_vainqueur_hero.png")
+        fenetre_smash_bros.blit(image, (0, 0))
+        pygame.mixer.music.stop
 
 
-# creation des joueur
+# creation des groups
 all_sprite = pygame.sprite.Group()
 SuperPower = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
@@ -287,10 +315,15 @@ sprite_icon = pygame.sprite.Group()
 sprite_healthBar_image = pygame.sprite.Group()
 sprite_healthBar = pygame.sprite.Group()
 
-abi = player((100, 408), "image/heros1.png", ((40, 23), (150, 9)))
-JC = player((350, 408), "image/skeletonBase.png", ((675, 23), (-150, 9)))
+#creation du personnage
+abi = player((100, 200), "image/heros1.png", ((40, 23), (150, 9)))
+JC = player((600, 200), "image/skeletonBase.png", ((675, 23), (-150, 9)))
+
+#creation des logos des personnage
 abi_Icon = icon("image/HeroIcon.png", (20, 25))
 JC_Icon = icon("image/SkeletonIcon.png", (690, 25))
+
+#creation de l'interface de la barre de vie
 abi_healthbar_image = (False, (35, 25), abi.health)
 JC_healthbar_image = (True, (650, 25), JC.health)
 
@@ -302,8 +335,9 @@ pygame.display.flip()
 launched = True
 while launched:
 
-    # pygame.time.Clock().tick(500)
 
+    # pygame.time.Clock().tick(50)
+    pygame.time.Clock().tick(50)
     # touche de clavier
 
     key = pygame.key.get_pressed()
@@ -335,20 +369,18 @@ while launched:
     abi.Health_player_image(True, (115, 30))
     JC.Health_player_image(False, (600, 30))
 
-    if not abi.alive:
-        launched = False
-    if not JC.alive:
-        launched = False
-
+    sprite_healthBar.update()
     SuperPower.update()
     bullets.update()
     all_sprite.update()
-    fenetre_smash_bros.fill(bleu)
-    pygame.draw.rect(fenetre_smash_bros, black, rectangle)
+    background()
     all_sprite.draw(fenetre_smash_bros)
     bullets.draw(fenetre_smash_bros)
     SuperPower.draw(fenetre_smash_bros)
     sprite_icon.draw(fenetre_smash_bros)
     sprite_healthBar_image.draw(fenetre_smash_bros)
+    healthBarPlayer(abi.health,JC.health)
+    PowerBar(abi.cooldownSuperPower,JC.cooldownSuperPower)
+    EndGame(abi.alive,JC.alive)
 
     pygame.display.flip()
