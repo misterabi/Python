@@ -1,29 +1,7 @@
 import pygame
+import constante
 
-"""
-Jeu Smash Bros
-Objectif : Survivre
-Nombre de joueurs maximum : 2
-Nombre de vie par joueur  : 3
-Règles de jeu :
- Joueur 1 :
-    Touches directionnelle : déplacer
-    Touche ESPACE : sauter
-    Touche V : attaquer 
- Joueur 2 : 
-    Touches Z,Q,S,D : déplacer
-    Touche 0 : sauter
-    Touche 1 : attaquer 
- Si un joueur A attaque un joueur B alors le joueur B perd une vie.
- Définition de attaquer : premier qui touche l'autre
-Phase de développement:
-1/ Afficher 2 joueurs sur un écran
-2/ Déplacer un joueur sur l'écran en fonction des clics clavier
-3/ Attaquer un joueur
-4/ Calculer victoire
-"""
 # couleur
-bleu = (14, 180, 245)
 black = (0, 0, 0)
 white = (255, 255, 255)
 Red = (255, 0, 0)
@@ -31,11 +9,10 @@ Green = (0, 255, 0)
 Yellow = (255, 255, 0)
 Orange = (255, 165, 0)
 
-directionVitesse = 5
+directionSpeed = 5
 pygame.init()
 
 # chargement des sons
-
 pygame.mixer.music.load('sons/music_background.ogg')
 # lance la music
 
@@ -45,94 +22,100 @@ pygame.mixer.music.set_volume(0.5)
 pygame.display.set_caption('SMASH BROS')
 pygame.key.set_repeat(30, 30)
 # taille de la fenetre
-fenetre_smash_bros = pygame.display.set_mode((720, 250))
+fenetre_smash_bros = pygame.display.set_mode((constante.ScreenWidth, constante.ScreenHeight))
 
 
 class player(pygame.sprite.Sprite):
-    sequences = [(0, 1, False), (1, 6, True), (25, 1, False)]
+    debout = (0, 1, False)
+    marche = (1, 6, True)
+    coup_de_poing = (25, 1, False)
+
+    animations = [debout, marche, coup_de_poing]
 
     def __init__(self, position, image):
         pygame.sprite.Sprite.__init__(self)
 
         self.spriteSheet = pygame.image.load(image).convert_alpha()
 
-        self.image = self.spriteSheet.subsurface(pygame.Rect(0, 0, 64, 90))
-        self.rect = pygame.Rect(0, 0, 32, 64)
+        self.image = self.spriteSheet.subsurface(pygame.Rect(0, 0, constante.ImagePersonnageWidth, constante.ImagePersonnageHeight))
+        self.rect = pygame.Rect(0, 0, constante.ImagePersonnageWidth/2, constante.ImagePersonnageWidth)
         self.rect.center = position
-        self.health = 100
+        self.health = constante.PersonnageHealth
         self.alive = True
 
         self.sens_personnage_droite = True
-        self.sens_personnage_gauche = False
 
         self.isJump = False
         self.jumpCount = 10
         self.cooldownSuperPower = 0
         self.cooldownFire = 1
 
-        self.numeroSequence = 0
+        self.numeroAnimation = 0
         self.numeroImage = 0
         self.flip = False
 
-        self.deltaTime = 0
-        self.vitesse = 2
+        self.fps = 0
+        self.vitesse = 5
 
         all_sprite.add(self)
 
     def update(self):
 
-        self.deltaTime = self.deltaTime + 16
+        self.fps = self.fps + 16
 
-        if self.deltaTime >= 50:
-            self.deltaTime = 0
+        if self.fps >= constante.FpsAnimationLimite:
+            self.fps = 0
 
-            n = player.sequences[self.numeroSequence][0] + self.numeroImage
-            self.image = self.spriteSheet.subsurface(pygame.Rect(n % 10 * 64, n // 10 * 90, 64, 90))
+            #recuperation du premier tableau dans le tableau animation puis le premier element du tableau premier
+            # n : nombre
+
+            n = player.animations[self.numeroAnimation][0] + self.numeroImage
+            self.image = self.spriteSheet.subsurface(pygame.Rect(n % 10 * constante.ImagePersonnageWidth, n // 10 * constante.ImagePersonnageHeight, constante.ImagePersonnageWidth, constante.ImagePersonnageHeight))
             if self.flip:
                 self.image = pygame.transform.flip(self.image, True, False)
 
             self.numeroImage += 1
 
-            if self.numeroImage == player.sequences[self.numeroSequence][1]:
-                if player.sequences[self.numeroSequence][2]:
+            if self.numeroImage == player.animations[self.numeroAnimation][1]:
+                if player.animations[self.numeroAnimation][2]:
                     self.numeroImage = 0
                 else:
                     self.numeroImage -= 1
 
-    def setSequence(self, n):
-        if self.numeroSequence != n:
+    def setAnimation(self, n):
+        if self.numeroAnimation != n:
             self.numeroImage = 0
-            self.numeroSequence = n
+            self.numeroAnimation = n
 
     def stand(self):
-        self.setSequence(0)
+        self.setAnimation(0)
 
     def goRight(self):
         self.rect = self.rect.move(self.vitesse, 0)
         self.flip = False
-        self.setSequence(1)
+        self.setAnimation(1)
 
     def goLeft(self):
         self.rect = self.rect.move(-self.vitesse, 0)
         self.flip = True
-        self.setSequence(1)
+        self.setAnimation(1)
 
     def punch(self):
-        self.setSequence(2)
+        self.setAnimation(2)
 
     def shoot(self, speed):
         if self.sens_personnage_droite is True:
-            ball = Ball((self.rect.centerx + 30, self.rect.centery), speed, "image/fireball1.png", False)
-        if self.sens_personnage_gauche is True:
-            ball = Ball((self.rect.centerx - 30, self.rect.centery), speed, "image/fireball1.png", True)
+            ball = Ball((self.rect.centerx + 40, self.rect.centery), speed, constante.BouleDeFeuImage, False)
+        else:
+            ball = Ball((self.rect.centerx - 40, self.rect.centery), speed, constante.BouleDeFeuImage, True)
 
         bullets.add(ball)
 
     def SuperPower(self, speed):
         if self.sens_personnage_droite is True:
-            Superball = Ball((self.rect.centerx + 30, self.rect.centery), speed, "image/Superfireball.png", False)
-        if self.sens_personnage_gauche is True:
-            Superball = Ball((self.rect.centerx - 30, self.rect.centery), speed, "image/Superfireball.png", True)
+            Superball = Ball((self.rect.centerx , self.rect.centery), speed, constante.SuperBouleDeFeuImage, False)
+        else:
+            Superball = Ball((self.rect.centerx , self.rect.centery), speed, constante.SuperBouleDeFeuImage, True)
         SuperPower.add(Superball)
 
     def Health_player_image(self, flip, coordonne_image):
@@ -153,7 +136,7 @@ class Ball(pygame.sprite.Sprite):
         self.rect.x += self.speed
         if self.flip:
             self.image = pygame.transform.flip(self.image, True, False)
-        if self.rect.y > 720:
+        if self.rect.y > constante.ScreenWidth:
             self.kill()
 
 
@@ -169,7 +152,7 @@ class icon(pygame.sprite.Sprite):
 class healthBarImage(pygame.sprite.Sprite):
     def __init__(self, flip, coordonne_image):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load("image/healthBar.png").convert_alpha()
+        self.image = pygame.image.load(constante.HealthBarImage).convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.center = coordonne_image
         if flip:
@@ -177,13 +160,18 @@ class healthBarImage(pygame.sprite.Sprite):
 
 
 def background():
-    image = pygame.image.load("image/bgjeux.png")
+    image = pygame.image.load(constante.BackgroundImage)
     fenetre_smash_bros.blit(image, (0, 0))
 
 
 def PowerBar(Allie_cooldownSuperPower, ennemie_cooldownSuperPower):
-    pygame.draw.rect(fenetre_smash_bros, Yellow, (68, 36, (Allie_cooldownSuperPower * 123) / 10, 3))
-    pygame.draw.rect(fenetre_smash_bros, Yellow, (650, 36, (ennemie_cooldownSuperPower * 123) / 10 * -1, 3))
+    if Allie_cooldownSuperPower > 10:
+        Allie_cooldownSuperPower=10
+    pygame.draw.rect(fenetre_smash_bros, constante.bleu, (68, 36, (Allie_cooldownSuperPower * 123) / 10, 3))
+
+    if ennemie_cooldownSuperPower > 10:
+        ennemie_cooldownSuperPower=10
+    pygame.draw.rect(fenetre_smash_bros, constante.bleu, (650, 36, (ennemie_cooldownSuperPower * 123) / 10 * -1, 3))
 
 
 def healthBarPlayer(Allie_health, ennemie_health):
@@ -209,56 +197,46 @@ def healthBarPlayer(Allie_health, ennemie_health):
 
 
 def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, hitFire, hitSuperPower):
-    global directionVitesse
+    global directionSpeed
     if event.type == pygame.KEYDOWN and event.key is leurre or droite or gauche or saut or tire or coup:
         if gauche and joueur.rect.x > 1 and not bloc:
             joueur.goLeft()
-        if droite and joueur.rect.x < 685 and not bloc:
+        if droite and joueur.rect.x < constante.ScreenWidth-constante.ImagePersonnageWidth*0.75 and not bloc:
             joueur.goRight()
 
         if event.type == pygame.KEYUP:
             if droite:
-                joueur.sens_personnage_gauche = False
                 joueur.sens_personnage_droite = True
-                directionVitesse = 5
             if gauche:
                 joueur.sens_personnage_droite = False
-                joueur.sens_personnage_gauche = True
-                directionVitesse = -5
+
+        if joueur.sens_personnage_droite:
+            directionSpeed = constante.vitesseDeplacement
+        else:
+            directionSpeed = -constante.vitesseDeplacement
 
         if not joueur.isJump:
             if saut:
                 joueur.isJump = True
 
-        if joueur.isJump is True:
-            if joueur.jumpCount >= -10:
-                neg = 1
-                if joueur.jumpCount < 0:
-                    neg = -1
-                joueur.rect = joueur.rect.move(0, -(joueur.jumpCount ** 2) * 0.3 * neg)
-
-                joueur.jumpCount -= 1
-            else:
-                joueur.isJump = False
-                joueur.jumpCount = 10
         # coup de poing#
         if joueur.cooldownFire >= 1 and coup:
             joueur.punch()
             joueur.cooldownFire -= 1
             if joueur.rect.colliderect(ennemie.rect):
-                if ennemie.rect.x > 10 and ennemie.rect.x < 670:
-                    ennemie.health -= 2.5
-                    ennemie.rect = ennemie.rect.move(directionVitesse * 3, 0)
-                    print("toucher")
-                    joueur.cooldownSuperPower += 1
+                if ennemie.rect.x > 1 and ennemie.rect.x < constante.ScreenWidth-constante.ImagePersonnageWidth*0.75:
+                    ennemie.health -= constante.PersonnagePunch
+                    ennemie.rect = ennemie.rect.move(directionSpeed * 3, 0)
+                    joueur.cooldownSuperPower += constante.PersonnageCooldownPunch
 
         # boule de feu#
         if joueur.cooldownFire >= 1.5 and tire:
-            joueur.shoot(directionVitesse)
+            print("directionSpeed : ", directionSpeed)
+            joueur.shoot(directionSpeed)
             joueur.cooldownFire -= 2
         # Super Attaque#
         if tire and coup and joueur.cooldownSuperPower >= 10:
-            joueur.SuperPower(directionVitesse)
+            joueur.SuperPower(directionSpeed)
             joueur.cooldownSuperPower = 0
         if tire and coup and joueur.cooldownSuperPower <= 10:
             print("il vous reste:", joueur.cooldownSuperPower)
@@ -273,25 +251,36 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
         joueur.health -= 0
 
     elif not bloc and hitFire:
-        joueur.health -= 2
-        ennemie.cooldownSuperPower += 0.5
+        joueur.health -= constante.PersonnageFireBall
+        ennemie.cooldownSuperPower += constante.PersonnageCooldownFireBall
         if joueur.rect.x > 10 and joueur.rect.x < 670:
-            joueur.rect = joueur.rect.move(directionVitesse * 3, 0)
+            joueur.rect = joueur.rect.move(directionSpeed * 3, 0)
 
     if hitSuperPower:
-        joueur.health -= 15
+        joueur.health -= constante.PersonnageSuperFireBall
     if joueur.health <= 0:
         joueur.alive = False
         joueur.kill()
 
+    if joueur.isJump is True:
+        if joueur.jumpCount >= -10:
+            neg = 1
+            if joueur.jumpCount < 0:
+                neg = -1
+            joueur.rect = joueur.rect.move(0, -(joueur.jumpCount ** 2) * 0.3 * neg)
+
+            joueur.jumpCount -= 1
+        else:
+            joueur.isJump = False
+            joueur.jumpCount = 10
 
 def EndGame(playeur1Alive, playeur2Alive):
     if not playeur1Alive:
-        image = pygame.image.load("image/image_vainqueur_squelette.png")
+        image = pygame.image.load(constante.ImageVainqueurSquelette)
         fenetre_smash_bros.blit(image, (0, 0))
         pygame.mixer.music.stop
     if not playeur2Alive:
-        image = pygame.image.load("image/image_vainqueur_hero.png")
+        image = pygame.image.load(constante.ImageVainqueurHeros)
         fenetre_smash_bros.blit(image, (0, 0))
         pygame.mixer.music.stop
 
@@ -327,13 +316,14 @@ launched = True
 while launched:
 
     # pygame.time.Clock().tick(50)
-    pygame.time.Clock().tick(100)
+    pygame.time.Clock().tick(500)
+
     # touche de clavier
 
     key = pygame.key.get_pressed()
     Left1 = key[pygame.K_a]
     Right1 = key[pygame.K_d]
-    Jump1 = key[pygame.K_z]
+    Jump1 = key[pygame.K_w]
     fire1 = key[pygame.K_g]
     punching1 = key[pygame.K_f]
     bloc1 = key[pygame.K_SPACE]
