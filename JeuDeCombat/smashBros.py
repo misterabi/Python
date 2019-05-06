@@ -26,19 +26,22 @@ fenetre_smash_bros = pygame.display.set_mode((constante.ScreenWidth, constante.S
 
 
 class player(pygame.sprite.Sprite):
+
     debout = (0, 1, False)
     marche = (1, 6, True)
     coup_de_poing = (25, 1, False)
+    defence = (29,1,False)
 
-    animations = [debout, marche, coup_de_poing]
+    animations = [debout, marche, coup_de_poing,defence]
 
     def __init__(self, position, image):
         pygame.sprite.Sprite.__init__(self)
 
         self.spriteSheet = pygame.image.load(image).convert_alpha()
 
-        self.image = self.spriteSheet.subsurface(pygame.Rect(0, 0, constante.ImagePersonnageWidth, constante.ImagePersonnageHeight))
-        self.rect = pygame.Rect(0, 0, constante.ImagePersonnageWidth/2, constante.ImagePersonnageWidth)
+        self.image = self.spriteSheet.subsurface(
+            pygame.Rect(0, 0, constante.ImagePersonnageWidth, constante.ImagePersonnageHeight))
+        self.rect = pygame.Rect(0, 0, constante.ImagePersonnageWidth / 2, constante.ImagePersonnageWidth)
         self.rect.center = position
         self.health = constante.PersonnageHealth
         self.alive = True
@@ -66,11 +69,13 @@ class player(pygame.sprite.Sprite):
         if self.fps >= constante.FpsAnimationLimite:
             self.fps = 0
 
-            #recuperation du premier tableau dans le tableau animation puis le premier element du tableau premier
+            # recuperation du premier tableau dans le tableau animation puis le premier element du tableau premier
             # n : nombre
 
             n = player.animations[self.numeroAnimation][0] + self.numeroImage
-            self.image = self.spriteSheet.subsurface(pygame.Rect(n % 10 * constante.ImagePersonnageWidth, n // 10 * constante.ImagePersonnageHeight, constante.ImagePersonnageWidth, constante.ImagePersonnageHeight))
+            self.image = self.spriteSheet.subsurface(
+                pygame.Rect(n % 10 * constante.ImagePersonnageWidth, n // 10 * constante.ImagePersonnageHeight,
+                            constante.ImagePersonnageWidth, constante.ImagePersonnageHeight))
             if self.flip:
                 self.image = pygame.transform.flip(self.image, True, False)
 
@@ -103,6 +108,9 @@ class player(pygame.sprite.Sprite):
     def punch(self):
         self.setAnimation(2)
 
+    def defence(self):
+        self.setAnimation(3)
+
     def shoot(self, speed):
         if self.sens_personnage_droite is True:
             ball = Ball((self.rect.centerx + 40, self.rect.centery), speed, constante.BouleDeFeuImage, False)
@@ -113,9 +121,9 @@ class player(pygame.sprite.Sprite):
 
     def SuperPower(self, speed):
         if self.sens_personnage_droite is True:
-            Superball = Ball((self.rect.centerx , self.rect.centery), speed, constante.SuperBouleDeFeuImage, False)
+            Superball = Ball((self.rect.centerx, self.rect.centery), speed, constante.SuperBouleDeFeuImage, False)
         else:
-            Superball = Ball((self.rect.centerx , self.rect.centery), speed, constante.SuperBouleDeFeuImage, True)
+            Superball = Ball((self.rect.centerx, self.rect.centery), speed, constante.SuperBouleDeFeuImage, True)
         SuperPower.add(Superball)
 
     def Health_player_image(self, flip, coordonne_image):
@@ -166,11 +174,11 @@ def background():
 
 def PowerBar(Allie_cooldownSuperPower, ennemie_cooldownSuperPower):
     if Allie_cooldownSuperPower > 10:
-        Allie_cooldownSuperPower=10
+        Allie_cooldownSuperPower = 10
     pygame.draw.rect(fenetre_smash_bros, constante.bleu, (68, 36, (Allie_cooldownSuperPower * 123) / 10, 3))
 
     if ennemie_cooldownSuperPower > 10:
-        ennemie_cooldownSuperPower=10
+        ennemie_cooldownSuperPower = 10
     pygame.draw.rect(fenetre_smash_bros, constante.bleu, (650, 36, (ennemie_cooldownSuperPower * 123) / 10 * -1, 3))
 
 
@@ -201,7 +209,7 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
     if event.type == pygame.KEYDOWN and event.key is leurre or droite or gauche or saut or tire or coup:
         if gauche and joueur.rect.x > 1 and not bloc:
             joueur.goLeft()
-        if droite and joueur.rect.x < constante.ScreenWidth-constante.ImagePersonnageWidth*0.75 and not bloc:
+        if droite and joueur.rect.x < constante.ScreenWidth - constante.ImagePersonnageWidth * 0.75 and not bloc:
             joueur.goRight()
 
         if event.type == pygame.KEYUP:
@@ -224,23 +232,19 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
             joueur.punch()
             joueur.cooldownFire -= 1
             if joueur.rect.colliderect(ennemie.rect):
-                if ennemie.rect.x > 1 and ennemie.rect.x < constante.ScreenWidth-constante.ImagePersonnageWidth*0.75:
+                if ennemie.rect.x > 1 and ennemie.rect.x < constante.ScreenWidth - constante.ImagePersonnageWidth * 0.75:
                     ennemie.health -= constante.PersonnagePunch
                     ennemie.rect = ennemie.rect.move(directionSpeed * 3, 0)
                     joueur.cooldownSuperPower += constante.PersonnageCooldownPunch
 
         # boule de feu#
         if joueur.cooldownFire >= 1.5 and tire:
-            print("directionSpeed : ", directionSpeed)
             joueur.shoot(directionSpeed)
             joueur.cooldownFire -= 2
         # Super Attaque#
         if tire and coup and joueur.cooldownSuperPower >= 10:
             joueur.SuperPower(directionSpeed)
             joueur.cooldownSuperPower = 0
-        if tire and coup and joueur.cooldownSuperPower <= 10:
-            print("il vous reste:", joueur.cooldownSuperPower)
-
 
     else:
         joueur.stand()
@@ -249,6 +253,7 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
     # collision attaque distance#
     if bloc and hitFire:
         joueur.health -= 0
+        joueur.defence()
 
     elif not bloc and hitFire:
         joueur.health -= constante.PersonnageFireBall
@@ -273,6 +278,7 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
         else:
             joueur.isJump = False
             joueur.jumpCount = 10
+
 
 def EndGame(playeur1Alive, playeur2Alive):
     if not playeur1Alive:
@@ -316,7 +322,7 @@ launched = True
 while launched:
 
     # pygame.time.Clock().tick(50)
-    pygame.time.Clock().tick(500)
+    pygame.time.Clock().tick(100)
 
     # touche de clavier
 
