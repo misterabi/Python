@@ -17,6 +17,9 @@ BackgroundImage = "image/bgjeux.png"
 ImageVainqueurSquelette = "image/image_vainqueur_squelette.png"
 ImageVainqueurHeros = "image/image_vainqueur_hero.png"
 
+player1="abi"
+player2="JC"
+
 FpsAnimationLimite = 50
 
 ImagePersonnageWidth = 64
