@@ -1,7 +1,7 @@
 import pygame
 import constante
 
-# couleur
+bleu = (14, 180, 245)
 black = (0, 0, 0)
 white = (255, 255, 255)
 Red = (255, 0, 0)
@@ -9,31 +9,16 @@ Green = (0, 255, 0)
 Yellow = (255, 255, 0)
 Orange = (255, 165, 0)
 
-directionSpeed = 5
 pygame.init()
-
-# chargement des sons
-pygame.mixer.music.load('sons/music_background.ogg')
-# lance la music
-
-pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(0.5)
-# titre
-
-pygame.display.set_caption('FIGHTER')
-pygame.key.set_repeat(30, 30)
-# taille de la fenetre
-fenetre_fighter = pygame.display.set_mode((constante.ScreenWidth, constante.ScreenHeight))
 
 
 class player(pygame.sprite.Sprite):
-
     debout = (0, 1, False)
     marche = (1, 6, True)
     coup_de_poing = (25, 1, False)
-    defence = (29,1,False)
+    defence = (29, 1, False)
 
-    animations = [debout, marche, coup_de_poing,defence]
+    animations = [debout, marche, coup_de_poing, defence]
 
     def __init__(self, position, image):
         pygame.sprite.Sprite.__init__(self)
@@ -75,7 +60,8 @@ class player(pygame.sprite.Sprite):
 
             n = player.animations[self.numeroAnimation][0] + self.numeroImage
             self.image = self.spriteSheet.subsurface(
-                pygame.Rect(n % 10 * constante.ImagePersonnageWidth, n // 10 * constante.ImagePersonnageHeight,
+                pygame.Rect(n % 10 * constante.ImagePersonnageWidth,
+                            n // 10 * constante.ImagePersonnageHeight,
                             constante.ImagePersonnageWidth, constante.ImagePersonnageHeight))
             if self.flip:
                 self.image = pygame.transform.flip(self.image, True, False)
@@ -114,7 +100,8 @@ class player(pygame.sprite.Sprite):
 
     def shoot(self, speed):
         if self.sens_personnage_droite is True:
-            ball = Ball((self.rect.centerx + 40, self.rect.centery), speed, constante.BouleDeFeuImage, False)
+            ball = Ball((self.rect.centerx + 40, self.rect.centery), speed, constante.BouleDeFeuImage,
+                        False)
         else:
             ball = Ball((self.rect.centerx - 40, self.rect.centery), speed, constante.BouleDeFeuImage, True)
 
@@ -122,9 +109,11 @@ class player(pygame.sprite.Sprite):
 
     def SuperPower(self, speed):
         if self.sens_personnage_droite is True:
-            Superball = Ball((self.rect.centerx + 40, self.rect.centery), speed, constante.SuperBouleDeFeuImage, False)
+            Superball = Ball((self.rect.centerx + 40, self.rect.centery), speed,
+                             constante.SuperBouleDeFeuImage, False)
         else:
-            Superball = Ball((self.rect.centerx - 40, self.rect.centery), speed, constante.SuperBouleDeFeuImage, True)
+            Superball = Ball((self.rect.centerx - 40, self.rect.centery), speed,
+                             constante.SuperBouleDeFeuImage, True)
         SuperPower.add(Superball)
 
     def Health_player_image(self, flip, coordonne_image):
@@ -180,7 +169,8 @@ def PowerBar(Allie_cooldownSuperPower, ennemie_cooldownSuperPower):
 
     if ennemie_cooldownSuperPower > 10:
         ennemie_cooldownSuperPower = 10
-    pygame.draw.rect(fenetre_fighter, constante.bleu, (650, 36, (ennemie_cooldownSuperPower * 123) / 10 * -1, 3))
+    pygame.draw.rect(fenetre_fighter, constante.bleu,
+                     (650, 36, (ennemie_cooldownSuperPower * 123) / 10 * -1, 3))
 
 
 def healthBarPlayer(Allie_health, ennemie_health):
@@ -202,7 +192,8 @@ def healthBarPlayer(Allie_health, ennemie_health):
     else:
         playerBarColor_ennemie = Red
     pygame.draw.rect(fenetre_fighter, playerBarColor_Allie, (40, 23, ((Allie_health * 150) / 100 * 1), 9))
-    pygame.draw.rect(fenetre_fighter, playerBarColor_ennemie, (675, 23, ((ennemie_health * 150) / 100 * -1), 9))
+    pygame.draw.rect(fenetre_fighter, playerBarColor_ennemie,
+                     (675, 23, ((ennemie_health * 150) / 100 * -1), 9))
 
 
 def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, hitFire, hitSuperPower):
@@ -292,82 +283,133 @@ def EndGame(playeur1Alive, playeur2Alive):
         pygame.mixer.music.stop
 
 
-# creation des groups
-all_sprite = pygame.sprite.Group()
-SuperPower = pygame.sprite.Group()
-bullets = pygame.sprite.Group()
-enemie = pygame.sprite.Group()
-allie = pygame.sprite.Group()
-sprite_icon = pygame.sprite.Group()
-sprite_healthBar_image = pygame.sprite.Group()
-sprite_healthBar = pygame.sprite.Group()
+fen = pygame.display.set_mode((720, 480)) #création de la fenêtre
+fen.fill(bleu)
+rectangle = pygame.Rect(240, 50, 240, 100)
+pygame.draw.rect(fen, black, rectangle)        #création d'un rectangle pour chaque partie
+rectangle1 = pygame.Rect(240, 200, 240, 100)
+pygame.draw.rect(fen, black, rectangle1)
+rectangle2 = pygame.Rect(240, 350, 240, 100)
+pygame.draw.rect(fen, black, rectangle2)
 
-# creation du personnage
-abi = player((100, 200), "image/heros1.png")
-JC = player((600, 200), "image/skeletonBase.png")
+test = pygame.image.load("image/quitter.png")
+fen.blit(test, (240, 350))
 
-# creation des logos des personnage
-abi_Icon = icon("image/HeroIcon.png", (20, 25))
-JC_Icon = icon("image/SkeletonIcon.png", (690, 25))
+test2 = pygame.image.load("image/a_propos.png")  #image "A propos"
+fen.blit(test2, (240, 200))
 
-# creation de l'interface de la barre de vie
-abi_healthbar_image = (False, (35, 25), abi.health)
-JC_healthbar_image = (True, (650, 25), JC.health)
+test3 = pygame.image.load("image/Jouer.png")  #image "A propos"
+fen.blit(test3, (240, 50))
 
-enemie.add(JC)
-allie.add(abi)
 
-pygame.display.flip()
-
-launched = True
-while launched:
-
-    # pygame.time.Clock().tick(50)
-    pygame.time.Clock().tick(1000)
-
-    # touche de clavier
-
-    key = pygame.key.get_pressed()
-    Left1 = key[pygame.K_a]
-    Right1 = key[pygame.K_d]
-    Jump1 = key[pygame.K_w]
-    fire1 = key[pygame.K_g]
-    punching1 = key[pygame.K_f]
-    bloc1 = key[pygame.K_SPACE]
-
-    Left2 = key[pygame.K_LEFT]
-    Right2 = key[pygame.K_RIGHT]
-    Jump2 = key[pygame.K_UP]
-    fire2 = key[pygame.K_RCTRL]
-    punching2 = key[pygame.K_RALT]
-    bloc2 = key[pygame.K_RSHIFT]
-
-    test = key[pygame.K_j]
-    hitsFirePlayer1 = pygame.sprite.groupcollide(bullets, allie, True, False)
-    hitsFirePlayer2 = pygame.sprite.groupcollide(bullets, enemie, True, False)
-    hitSuperPowerPlayer1 = pygame.sprite.groupcollide(SuperPower, allie, True, False)
-    hitSuperPowerPlayer2 = pygame.sprite.groupcollide(SuperPower, enemie, True, False)
+lol=1
+while lol :
+    m1,m2,m3=pygame.mouse.get_pressed() #bouton de la souris
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             launched = False
-    mouvement(abi, JC, test, Left1, Right1, Jump1, fire1, punching1, bloc1, hitsFirePlayer1, hitSuperPowerPlayer1)
-    mouvement(JC, abi, test, Left2, Right2, Jump2, fire2, punching2, bloc2, hitsFirePlayer2, hitSuperPowerPlayer2)
+            lol = 0
+    posx,posy=pygame.mouse.get_pos()
+    if posx >240 and posx <480 and posy >50 and posy<150 and m1 ==1:  #bouton jouer
+        pygame.display.quit()
+        pygame.display.set_caption('FIGHTER')
 
-    abi.Health_player_image(True, (115, 30))
-    JC.Health_player_image(False, (600, 30))
+        # taille de la fenetre
+        fenetre_fighter = pygame.display.set_mode((constante.ScreenWidth, constante.ScreenHeight))
 
-    sprite_healthBar.update()
-    SuperPower.update()
-    bullets.update()
-    all_sprite.update()
-    background()
-    all_sprite.draw(fenetre_fighter)
-    bullets.draw(fenetre_fighter)
-    SuperPower.draw(fenetre_fighter)
-    sprite_icon.draw(fenetre_fighter)
-    sprite_healthBar_image.draw(fenetre_fighter)
-    healthBarPlayer(abi.health, JC.health)
-    PowerBar(abi.cooldownSuperPower, JC.cooldownSuperPower)
-    EndGame(abi.alive, JC.alive)
+        # creation des groups
+        all_sprite = pygame.sprite.Group()
+        SuperPower = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
+        enemie = pygame.sprite.Group()
+        allie = pygame.sprite.Group()
+        sprite_icon = pygame.sprite.Group()
+        sprite_healthBar_image = pygame.sprite.Group()
+        sprite_healthBar = pygame.sprite.Group()
+
+        # creation du personnage
+        abi = player((100, 200), "image/heros1.png")
+        JC = player((600, 200), "image/skeletonBase.png")
+
+        # creation des logos des personnage
+        abi_Icon = icon("image/HeroIcon.png", (20, 25))
+        JC_Icon = icon("image/SkeletonIcon.png", (690, 25))
+
+        # creation de l'interface de la barre de vie
+        abi_healthbar_image = (False, (35, 25), abi.health)
+        JC_healthbar_image = (True, (650, 25), JC.health)
+
+        enemie.add(JC)
+        allie.add(abi)
+
+        pygame.display.flip()
+
+        launched = True
+        while launched:
+
+            # pygame.time.Clock().tick(50)
+            pygame.time.Clock().tick(1000)
+
+            # touche de clavier
+
+            key = pygame.key.get_pressed()
+            Left1 = key[pygame.K_a]
+            Right1 = key[pygame.K_d]
+            Jump1 = key[pygame.K_w]
+            fire1 = key[pygame.K_g]
+            punching1 = key[pygame.K_f]
+            bloc1 = key[pygame.K_SPACE]
+
+            Left2 = key[pygame.K_LEFT]
+            Right2 = key[pygame.K_RIGHT]
+            Jump2 = key[pygame.K_UP]
+            fire2 = key[pygame.K_RCTRL]
+            punching2 = key[pygame.K_RALT]
+            bloc2 = key[pygame.K_RSHIFT]
+
+            test = key[pygame.K_j]
+            hitsFirePlayer1 = pygame.sprite.groupcollide(bullets, allie, True, False)
+            hitsFirePlayer2 = pygame.sprite.groupcollide(bullets, enemie, True, False)
+            hitSuperPowerPlayer1 = pygame.sprite.groupcollide(SuperPower, allie, True, False)
+            hitSuperPowerPlayer2 = pygame.sprite.groupcollide(SuperPower, enemie, True, False)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    launched = False
+            mouvement(abi, JC, test, Left1, Right1, Jump1, fire1, punching1, bloc1, hitsFirePlayer1,
+                      hitSuperPowerPlayer1)
+            mouvement(JC, abi, test, Left2, Right2, Jump2, fire2, punching2, bloc2, hitsFirePlayer2,
+                      hitSuperPowerPlayer2)
+
+            abi.Health_player_image(True, (115, 30))
+            JC.Health_player_image(False, (600, 30))
+
+            sprite_healthBar.update()
+            SuperPower.update()
+            bullets.update()
+            all_sprite.update()
+            background()
+            all_sprite.draw(fenetre_fighter)
+            bullets.draw(fenetre_fighter)
+            SuperPower.draw(fenetre_fighter)
+            sprite_icon.draw(fenetre_fighter)
+            sprite_healthBar_image.draw(fenetre_fighter)
+            healthBarPlayer(abi.health, JC.health)
+            PowerBar(abi.cooldownSuperPower, JC.cooldownSuperPower)
+            EndGame(abi.alive, JC.alive)
+
+            pygame.display.flip()
+
+
+    if posx >240 and posx <480 and posy >200 and posy<300 and m1 ==1: #bouton à propos
+        pygame.display.quit()
+        fene = pygame.display.set_mode((720, 547))
+        a_propos=pygame.image.load("image/a_propos_fichier.png")
+        fene.blit(a_propos, (0, 0))
+
+    if posx >240 and posx <480 and posy >350 and posy<450 and m1 ==1:  #bouton  quitter
+        pygame.display.quit()
+
 
     pygame.display.flip()
+
+

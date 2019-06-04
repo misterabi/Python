@@ -25,10 +25,10 @@ FpsAnimationLimite = 50
 ImagePersonnageWidth = 64
 ImagePersonnageHeight = 90
 PersonnageHealth = 100
-PersonnagePunch = 2.5
-PersonnageFireBall = 2
-PersonnageSuperFireBall = 15
-PersonnageCooldownFireBall = 0.5
-PersonnageCooldownPunch = 1
+PersonnagePunch = 10
+PersonnageFireBall = 5
+PersonnageSuperFireBall = 30
+PersonnageCooldownFireBall = 2
+PersonnageCooldownPunch = 2
 
 vitesseDeplacement = 10
