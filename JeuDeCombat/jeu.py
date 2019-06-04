@@ -407,7 +407,7 @@ while lol :
         fene.blit(a_propos, (0, 0))
 
     if posx >240 and posx <480 and posy >350 and posy<450 and m1 ==1:  #bouton  quitter
-        pygame.display.quit()
+        lol=0
 
 
     pygame.display.flip()
