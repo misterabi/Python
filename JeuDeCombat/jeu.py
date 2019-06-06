@@ -8,11 +8,14 @@ Red = (255, 0, 0)
 Green = (0, 255, 0)
 Yellow = (255, 255, 0)
 Orange = (255, 165, 0)
+image = pygame.image.load(constante.BackgroundImage)
 
 pygame.init()
 
 
+# creation de la class joueur
 class player(pygame.sprite.Sprite):
+    # creationn des animations
     debout = (0, 1, False)
     marche = (1, 6, True)
     coup_de_poing = (25, 1, False)
@@ -27,7 +30,7 @@ class player(pygame.sprite.Sprite):
 
         self.image = self.spriteSheet.subsurface(
             pygame.Rect(0, 0, constante.ImagePersonnageWidth, constante.ImagePersonnageHeight))
-        self.rect = pygame.Rect(0, 0, constante.ImagePersonnageWidth / 2, constante.ImagePersonnageWidth)
+        self.rect = pygame.Rect(0, 0, constante.ImagePersonnageWidth , constante.ImagePersonnageWidth)
         self.rect.center = position
         self.health = constante.PersonnageHealth
         self.alive = True
@@ -38,6 +41,7 @@ class player(pygame.sprite.Sprite):
         self.jumpCount = 10
         self.cooldownSuperPower = 0
         self.cooldownFire = 1
+        self.cooldownPunch = 1
 
         self.numeroAnimation = 0
         self.numeroImage = 0
@@ -56,7 +60,6 @@ class player(pygame.sprite.Sprite):
             self.fps = 0
 
             # recuperation du premier tableau dans le tableau animation puis le premier element du tableau premier
-            # n : nombre
 
             n = player.animations[self.numeroAnimation][0] + self.numeroImage
             self.image = self.spriteSheet.subsurface(
@@ -121,6 +124,7 @@ class player(pygame.sprite.Sprite):
         sprite_healthBar_image.add(health_player_bar_image)
 
 
+# creation des attaques a distance ,boule de feu
 class Ball(pygame.sprite.Sprite):
     def __init__(self, position, speed, image, flip):
         pygame.sprite.Sprite.__init__(self)
@@ -157,11 +161,6 @@ class healthBarImage(pygame.sprite.Sprite):
             self.image = pygame.transform.flip(self.image, True, False)
 
 
-def background():
-    image = pygame.image.load(constante.BackgroundImage)
-    fenetre_fighter.blit(image, (0, 0))
-
-
 def PowerBar(Allie_cooldownSuperPower, ennemie_cooldownSuperPower):
     if Allie_cooldownSuperPower > 10:
         Allie_cooldownSuperPower = 10
@@ -174,6 +173,7 @@ def PowerBar(Allie_cooldownSuperPower, ennemie_cooldownSuperPower):
 
 
 def healthBarPlayer(Allie_health, ennemie_health):
+    # coloration de la bar de vie en fonction de la vie
     if Allie_health > 75:
         playerBarColor_Allie = Green
     elif Allie_health > 50:
@@ -198,12 +198,13 @@ def healthBarPlayer(Allie_health, ennemie_health):
 
 def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, hitFire, hitSuperPower):
     global directionSpeed
+
     if event.type == pygame.KEYDOWN and event.key is leurre or droite or gauche or saut or tire or coup:
         if gauche and joueur.rect.x > 1 and not bloc:
             joueur.goLeft()
-        if droite and joueur.rect.x < constante.ScreenWidth - constante.ImagePersonnageWidth * 0.75 and not bloc:
+        if droite and joueur.rect.x < constante.ScreenWidth - constante.ImagePersonnageWidth and not bloc:
             joueur.goRight()
-
+        # sens des attaque en fonction de la direction du personnage
         if event.type == pygame.KEYUP:
             if droite:
                 joueur.sens_personnage_droite = True
@@ -218,22 +219,23 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
         if not joueur.isJump:
             if saut:
                 joueur.isJump = True
+        # coup de poing
 
-        # coup de poing#
-        if joueur.cooldownFire >= 1 and coup:
+        if joueur.cooldownPunch >= 1 and coup:
             joueur.punch()
-            joueur.cooldownFire -= 1
+            joueur.cooldownPunch -= 1
             if joueur.rect.colliderect(ennemie.rect):
-                if ennemie.rect.x > 1 and ennemie.rect.x < constante.ScreenWidth - constante.ImagePersonnageWidth * 0.75:
+                if ennemie.rect.x > 1 and ennemie.rect.x < constante.ScreenWidth - constante.ImagePersonnageWidth:
                     ennemie.health -= constante.PersonnagePunch
                     ennemie.rect = ennemie.rect.move(directionSpeed * 3, 0)
                     joueur.cooldownSuperPower += constante.PersonnageCooldownPunch
 
-        # boule de feu#
+        # boule de feu
         if joueur.cooldownFire >= 1.5 and tire:
             joueur.shoot(directionSpeed)
             joueur.cooldownFire -= 2
-        # Super Attaque#
+        # Super Attaque
+
         if tire and coup and joueur.cooldownSuperPower >= 10:
             joueur.SuperPower(directionSpeed)
             joueur.cooldownSuperPower = 0
@@ -242,15 +244,19 @@ def mouvement(joueur, ennemie, leurre, gauche, droite, saut, tire, coup, bloc, h
         joueur.stand()
     if joueur.cooldownFire < 1.6:
         joueur.cooldownFire += 0.1
-    # collision attaque distance#
+    if joueur.cooldownPunch < 1.6:
+        joueur.cooldownPunch += 0.1
+    # collision attaque distance
+    # collision et defense du joueur
     if bloc and hitFire:
         joueur.health -= 0
         joueur.defence()
+        # collision et aucune defense du joueur
 
     elif not bloc and hitFire:
         joueur.health -= constante.PersonnageFireBall
         ennemie.cooldownSuperPower += constante.PersonnageCooldownFireBall
-        if joueur.rect.x > 10 and joueur.rect.x < 670:
+        if 10 < joueur.rect.x < 670:
             joueur.rect = joueur.rect.move(directionSpeed * 3, 0)
 
     if hitSuperPower:
@@ -283,35 +289,36 @@ def EndGame(playeur1Alive, playeur2Alive):
         pygame.mixer.music.stop
 
 
-fen = pygame.display.set_mode((720, 480)) #création de la fenêtre
+fen = pygame.display.set_mode((720, 480))  # création de la fenêtre
 fen.fill(bleu)
-rectangle = pygame.Rect(240, 50, 240, 100)
-pygame.draw.rect(fen, black, rectangle)        #création d'un rectangle pour chaque partie
-rectangle1 = pygame.Rect(240, 200, 240, 100)
-pygame.draw.rect(fen, black, rectangle1)
-rectangle2 = pygame.Rect(240, 350, 240, 100)
-pygame.draw.rect(fen, black, rectangle2)
 
-test = pygame.image.load("image/quitter.png")
-fen.blit(test, (240, 350))
+quitter = pygame.image.load("image/quitter.png")
+fen.blit(quitter, (240, 350))
 
-test2 = pygame.image.load("image/a_propos.png")  #image "A propos"
-fen.blit(test2, (240, 200))
+a_propos1 = pygame.image.load("image/a_propos.png")  # image "A propos"
+fen.blit(a_propos1, (240, 200))
 
-test3 = pygame.image.load("image/Jouer.png")  #image "A propos"
-fen.blit(test3, (240, 50))
+jouer = pygame.image.load("image/Jouer.png")  # image "Jouer"
+fen.blit(jouer, (240, 50))
 
-
-lol=1
-while lol :
-    m1,m2,m3=pygame.mouse.get_pressed() #bouton de la souris
+start = 1
+while start:
+    m1, m2, m3 = pygame.mouse.get_pressed()  # bouton de la souris
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             launched = False
-            lol = 0
-    posx,posy=pygame.mouse.get_pos()
-    if posx >240 and posx <480 and posy >50 and posy<150 and m1 ==1:  #bouton jouer
+            start = 0
+    posx, posy = pygame.mouse.get_pos()
+    if posx > 240 and posx < 480 and posy > 50 and posy < 150 and m1 == 1:  # bouton jouer
         pygame.display.quit()
+
+        # chargement du sons
+        pygame.mixer.music.load('sons/music_background.ogg')
+        # lance la music
+
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.5)
+
         pygame.display.set_caption('FIGHTER')
 
         # taille de la fenetre
@@ -331,13 +338,13 @@ while lol :
         abi = player((100, 200), "image/heros1.png")
         JC = player((600, 200), "image/skeletonBase.png")
 
-        # creation des logos des personnage
+        # creation des logos des personnages
         abi_Icon = icon("image/HeroIcon.png", (20, 25))
         JC_Icon = icon("image/SkeletonIcon.png", (690, 25))
 
         # creation de l'interface de la barre de vie
-        abi_healthbar_image = (False, (35, 25), abi.health)
-        JC_healthbar_image = (True, (650, 25), JC.health)
+        abi_healthbar_image = abi.health
+        JC_healthbar_image = JC.health
 
         enemie.add(JC)
         allie.add(abi)
@@ -347,8 +354,8 @@ while lol :
         launched = True
         while launched:
 
-            # pygame.time.Clock().tick(50)
-            pygame.time.Clock().tick(1000)
+            pygame.time.Clock().tick(50)
+
 
             # touche de clavier
 
@@ -387,7 +394,7 @@ while lol :
             SuperPower.update()
             bullets.update()
             all_sprite.update()
-            background()
+            fenetre_fighter.blit(image, (0, 0))
             all_sprite.draw(fenetre_fighter)
             bullets.draw(fenetre_fighter)
             SuperPower.draw(fenetre_fighter)
@@ -398,18 +405,15 @@ while lol :
             EndGame(abi.alive, JC.alive)
 
             pygame.display.flip()
+    # bouton à propos
 
-
-    if posx >240 and posx <480 and posy >200 and posy<300 and m1 ==1: #bouton à propos
+    elif posx > 240 and posx < 480 and posy > 200 and posy < 300 and m1 == 1:
         pygame.display.quit()
         fene = pygame.display.set_mode((720, 547))
-        a_propos=pygame.image.load("image/a_propos_fichier.png")
+        a_propos = pygame.image.load("image/a_propos_fichier.png")
         fene.blit(a_propos, (0, 0))
-
-    if posx >240 and posx <480 and posy >350 and posy<450 and m1 ==1:  #bouton  quitter
-        lol=0
-
+    # bouton  quitter
+    elif posx > 240 and posx < 480 and posy > 350 and posy < 450 and m1 == 1:
+        start = 0
 
     pygame.display.flip()
-
-
